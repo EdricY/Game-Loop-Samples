@@ -1,0 +1,53 @@
+<link rel="stylesheet" type="text/css" href="game.css">
+
+<canvas id="c"></canvas>
+
+<script>
+c.width = 500;
+c.height = 500;
+TAU = 2 * Math.PI;
+running = false;
+
+ctx = c.getContext("2d");
+
+function tick() {
+  update();
+  draw();
+}
+
+function update() {
+  ball.update();
+}
+
+function draw() {
+  //background
+  ctx.fillStyle = "#555";
+  ctx.fillRect(0,0, 500, 500)
+
+  //ball
+  ball.draw();
+}
+
+
+setInterval(tick, 1);
+
+
+ball = {
+  x: 200, y: 200,
+  vx: 1, vy: 1.6,
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 10, 0, TAU);
+    ctx.fillStyle = "red";
+    ctx.fill();
+  },
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    if (this.x + 10 > 500) this.vx = -Math.abs(this.vx);
+    else if (this.x - 10 < 0) this.vx = Math.abs(this.vx);
+    if (this.y + 10 > 500) this.vy = -Math.abs(this.vy);
+    else if (this.y - 10 < 0) this.vy = Math.abs(this.vy);
+  }
+}
+</script>
