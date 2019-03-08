@@ -5,54 +5,32 @@
 <script>
 c.width = 500;
 c.height = 500;
-const TAU = 2 * Math.PI;
-var running = false;
-var updates = 0;
-var draws = 0;
-var lastTime = Date.now();
-var updateRate = 0;
-var frameRate = 0;
+TAU = 2 * Math.PI;
+running = false;
+updates = 0;
 
 ctx = c.getContext("2d");
 
 function tick() {
   update();
   draw();
-  let elapsed = Date.now() - lastTime;
-  elapsed /= 1000; //in seconds
-  if (elapsed > 1) {
-    //set update rate and frame rate
-    lastTime = Date.now();
-    updateRate = updates / elapsed;
-    frameRate = draws / elapsed;
-    updates = 0;
-    draws = 0;
-  }
 }
 
-
 function update() {
-  updates++;
   ball.update();
 }
 
 function draw() {
-  draws++;
   //background
   ctx.fillStyle = "#555";
   ctx.fillRect(0,0, 500, 500)
 
   //ball
   ball.draw();
-
-  //HUD
-  ctx.fillStyle = "yellow";
-  ctx.fillText("update rate: " + updateRate.toFixed(3), 10, 100);
-  ctx.fillText("frame rate: " + frameRate.toFixed(3), 10, 200);
 }
 
 
-setInterval(tick, 300);
+setInterval(tick, 0);
 
 
 ball = {
