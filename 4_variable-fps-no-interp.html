@@ -17,7 +17,6 @@ const TICKS_PER_SECOND = 30;
 const MS_PER_TICK = 1000 / TICKS_PER_SECOND;
 const MAX_FRAMESKIP = 5;
 var next_game_tick = Date.now();
-var interpolation;
 
 ctx = c.getContext("2d");
 
@@ -28,8 +27,7 @@ function tick() {
     next_game_tick += MS_PER_TICK;
     loops++;
   }
-  interpolation = (Date.now() + MS_PER_TICK - next_game_tick) / MS_PER_TICK;
-  draw(interpolation);
+  draw(0);
 }
 
 setInterval(tick, 0);
