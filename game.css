@@ -4,7 +4,8 @@ body {
   flex-flow: column;
   align-items: center;
   justify-items: center;
+  background: #444;
 }
 canvas {
-  margin: 30px;
+  margin: 50px;
 }

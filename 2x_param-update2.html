@@ -1,0 +1,164 @@
+<link rel="stylesheet" type="text/css" href="game.css">
+
+<canvas id="c"></canvas>
+
+<script>
+c.width = 500;
+c.height = 500;
+const TAU = 2 * Math.PI;
+var running = false;
+var updates = 0;
+var draws = 0;
+var lastTime = Date.now();
+var updateRate = 0;
+var frameRate = 0;
+
+var prev_frame_tick;
+var curr_frame_tick = Date.now();
+
+ctx = c.getContext("2d");
+
+function tick() {
+  prev_frame_tick = curr_frame_tick;
+  curr_frame_tick = Date.now();
+  let elapsed = curr_frame_tick - prev_frame_tick;
+  update(elapsed);
+  draw();
+}
+
+setInterval(tick, 0);
+
+function update(timediff) {
+  updates++;
+  ball.update(timediff);
+  Particles.update(timediff);
+}
+
+function draw() {
+  draws++;
+  //background
+  ctx.fillStyle = "#555";
+  ctx.fillRect(0,0, 500, 500)
+
+  Particles.draw(ctx);
+
+  //ball
+  ball.draw();
+
+  //HUD
+  ctx.fillStyle = "yellow";
+  ctx.fillText("update rate: " + updateRate.toFixed(3), 10, 100);
+  ctx.fillText("frame rate: " + frameRate.toFixed(3), 10, 200);
+
+}
+
+ball = {
+  x: 200, y: 200,
+  vx: 1, vy: 1.6182, 
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 10, 0, TAU);
+    ctx.fillStyle = "red";
+    ctx.fill();
+  },
+  update(timediff) {
+    // assuming we want to move at about the same speed
+    // as 1 unit per update at 60 updates per second
+    // 1unit/update = 60units/60updates = 60units/second = 60units/1000ms = .06units/ms
+    this.x += this.vx * (timediff * .06);
+    this.y += this.vy * (timediff * .06);
+    if (this.x + 10 > 500) this.vx = -Math.abs(this.vx);
+    else if (this.x - 10 < 0) this.vx = Math.abs(this.vx);
+    if (this.y + 10 > 500) this.vy = -Math.abs(this.vy);
+    else if (this.y - 10 < 0) this.vy = Math.abs(this.vy);
+  }
+}
+
+function getRates() {
+  let elapsed = Date.now() - lastTime;
+  elapsed /= 1000; //in seconds
+  lastTime = Date.now();
+  updateRate = updates / elapsed;
+  frameRate = draws / elapsed;
+  updates = 0;
+  draws = 0;
+}
+
+setInterval(getRates, 2000)
+
+
+///////////// modified particles.js
+let partColors = ["#812", "#26C", "#262"];
+
+window.onkeydown = e => {
+  if (e.keyCode == 32) {
+    Particles.explode(ball.x, ball.y, "blue", 100, 20)
+  }
+}
+
+Particles = {
+	parts: [],
+	update: function(timediff){
+		let len = this.parts.length;
+		for (let i = 0; i < len; i++) {
+			if (this.parts[i].update) {
+				this.parts[i].update(timediff);
+			}
+			else {
+				this.parts.splice(i--, 1);
+				len--;
+			}
+		}
+	},
+	draw: function(ctx){
+		for (let p of this.parts) {
+			if (p.draw) p.draw(ctx);
+		}
+	},
+	addPart: function(x, y, color){
+		this.parts.push(newPart(x,y, color));
+	},
+  explode: function(x, y, color, t=20, rscale=10) {
+      for (let i = 0; i < t; i++){
+          this.parts.push(newPart(x, y, color, rscale));
+      }
+  }
+}
+
+function newPart(x, y, color, rscale) {
+	return {
+		ox: x,
+		oy: y,
+		x: x,
+		y: y,
+		r: 1 + rscale*Math.random(),
+		v: .2,
+		color: color,
+		theta: Math.random() * TAU,
+		draw: function(ctx){
+			ctx.beginPath();
+      let oldW = ctx.lineWidth;
+			ctx.lineWidth = 1;
+			ctx.fillStyle = this.color;
+			ctx.arc(this.x, this.y, this.r, 0, TAU);
+			ctx.fill();
+      ctx.strokeStyle = "black";
+			ctx.stroke();
+      ctx.closePath();
+      ctx.lineWidth = oldW;
+		},
+		update: function(timediff){
+			this.x += this.v * this.r * Math.cos(this.theta) * (timediff * .06);
+			this.y += this.v * this.r * Math.sin(this.theta) * (timediff * .06);
+			this.r -= .1;
+			if (this.r <= 0) {
+				this.update = null;
+				this.draw = () => {};
+				return;
+			}
+			this.theta += .3-.6*Math.random();
+		},
+
+	}
+}
+</script>

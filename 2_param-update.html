@@ -6,7 +6,6 @@
 <script>
 c.width = 500;
 c.height = 500;
-ctx = c.getContext("2d");
 const TAU = 2 * Math.PI;
 var running = false;
 var updates = 0;
@@ -15,42 +14,24 @@ var lastTime = Date.now();
 var updateRate = 0;
 var frameRate = 0;
 
-const FRAMES_PER_SEC = 60;
-const MS_PER_TICK = 1000/FRAMES_PER_SEC
+var prev_frame_tick;
+var curr_frame_tick = Date.now();
 
+ctx = c.getContext("2d");
 
 function tick() {
-  let begin = Date.now();
-  update();
+  prev_frame_tick = curr_frame_tick;
+  curr_frame_tick = Date.now();
+  let elapsed = curr_frame_tick - prev_frame_tick;
+  update(elapsed);
   draw();
-  let elapsed = Date.now() - begin;
-  let sleepTime = MS_PER_TICK - elapsed;
-  setTimeout(tick, sleepTime);
-  //properly handles negative sleepTime
 }
 
-setTimeout(tick, 0);
-
-/* a more c-like version (doesn't work in js)
-async function tick() {
-  let begin = Date.now();
-  update();
-  draw();
-  let elapsed = Date.now() - begin;
-  let sleepTime = MS_PER_TICK - elapsed;
-  await sleep(sleepTime);
-  setTimeout(tick, 0);
-}
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 setInterval(tick, 0);
-*/
 
-function update() {
+function update(timediff) {
   updates++;
-  ball.update();
+  ball.update(timediff);
   Particles.update();
 }
 
@@ -69,21 +50,24 @@ function draw() {
   ctx.fillStyle = "yellow";
   ctx.fillText("update rate: " + updateRate.toFixed(3), 10, 100);
   ctx.fillText("frame rate: " + frameRate.toFixed(3), 10, 200);
-}
 
+}
 
 ball = {
   x: 200, y: 200,
-  vx: 1, vy: 1.6182,
+  vx: 1, vy: 1.618, 
   draw() {
     ctx.beginPath();
     ctx.arc(this.x, this.y, 10, 0, TAU);
     ctx.fillStyle = "red";
     ctx.fill();
   },
-  update() {
-    this.x += this.vx;
-    this.y += this.vy;
+  update(timediff) {
+    // assuming we want to move at about the same speed
+    // as 1 unit per update at 60 updates per second
+    // 1unit/update = 60units/60updates = 60units/second = 60units/1000ms = .06units/ms
+    this.x += this.vx * (timediff * .06);
+    this.y += this.vy * (timediff * .06);
     if (this.x + 10 > 500) this.vx = -Math.abs(this.vx);
     else if (this.x - 10 < 0) this.vx = Math.abs(this.vx);
     if (this.y + 10 > 500) this.vy = -Math.abs(this.vy);
@@ -102,4 +86,5 @@ function getRates() {
 }
 
 setInterval(getRates, 2000)
+
 </script>

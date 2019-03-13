@@ -1,0 +1,91 @@
+<link rel="stylesheet" type="text/css" href="game.css">
+
+<canvas id="c"></canvas>
+
+<script src="particles.js"></script>
+<script>
+c.width = 500;
+c.height = 500;
+const TAU = 2 * Math.PI;
+var running = false;
+var updates = 0;
+var draws = 0;
+var lastTime = Date.now();
+var updateRate = 0;
+var frameRate = 0;
+
+const TICKS_PER_SECOND = 60;
+const MS_PER_TICK = 1000 / TICKS_PER_SECOND;
+const MAX_FRAMESKIP = 10;
+var next_game_tick = Date.now();
+
+ctx = c.getContext("2d");
+
+function tick() {
+  let loops = 0;
+  while (Date.now() > next_game_tick && loops < MAX_FRAMESKIP) {
+    update();
+    next_game_tick += MS_PER_TICK;
+    loops++;
+  }
+  draw();
+}
+
+setInterval(tick, 0);
+
+function update() {
+  updates++;
+  ball.update();
+  Particles.update();
+}
+
+function draw() {
+  draws++;
+  //background
+  ctx.fillStyle = "#555";
+  ctx.fillRect(0,0, 500, 500)
+
+  Particles.draw(ctx);
+
+  //ball
+  ball.draw();
+
+  //HUD
+  ctx.fillStyle = "yellow";
+  ctx.fillText("update rate: " + updateRate.toFixed(3), 10, 100);
+  ctx.fillText("frame rate: " + frameRate.toFixed(3), 10, 200);
+
+}
+
+ball = {
+  x: 200, y: 200,
+  vx: 1, vy: 1.618,
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 10, 0, TAU);
+    ctx.fillStyle = "red";
+    ctx.fill();
+  },
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    if (this.x + 10 > 500) this.vx = -Math.abs(this.vx);
+    else if (this.x - 10 < 0) this.vx = Math.abs(this.vx);
+    if (this.y + 10 > 500) this.vy = -Math.abs(this.vy);
+    else if (this.y - 10 < 0) this.vy = Math.abs(this.vy);
+  }
+}
+
+function getRates() {
+  let elapsed = Date.now() - lastTime;
+  elapsed /= 1000; //in seconds
+  lastTime = Date.now();
+  updateRate = updates / elapsed;
+  frameRate = draws / elapsed;
+  updates = 0;
+  draws = 0;
+}
+
+setInterval(getRates, 2000)
+
+</script>

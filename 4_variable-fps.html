@@ -1,0 +1,172 @@
+<link rel="stylesheet" type="text/css" href="game.css">
+
+<canvas id="c"></canvas>
+
+<script>
+c.width = 500;
+c.height = 500;
+const TAU = 2 * Math.PI;
+var running = false;
+var updates = 0;
+var draws = 0;
+var lastTime = Date.now();
+var updateRate = 0;
+var frameRate = 0;
+
+const TICKS_PER_SECOND = 30;
+const MS_PER_TICK = 1000 / TICKS_PER_SECOND;
+const MAX_FRAMESKIP = 5;
+var next_game_tick = Date.now();
+var interpolation;
+
+ctx = c.getContext("2d");
+
+function tick() {
+  let loops = 0;
+  while (Date.now() > next_game_tick && loops < MAX_FRAMESKIP) {
+    update();
+    next_game_tick += MS_PER_TICK;
+    loops++;
+  }
+  interpolation = (Date.now() + MS_PER_TICK - next_game_tick) / MS_PER_TICK;
+  draw(interpolation);
+}
+
+setInterval(tick, 0);
+
+function update() {
+  updates++;
+  ball.update();
+  Particles.update();
+}
+
+function draw(interpolation) {
+  draws++;
+  //background
+  ctx.fillStyle = "#555";
+  ctx.fillRect(0,0, 500, 500)
+
+  Particles.draw(ctx);
+
+  //ball
+  ball.draw(interpolation);
+
+  //HUD
+  ctx.fillStyle = "yellow";
+  ctx.fillText("update rate: " + updateRate.toFixed(3), 10, 100);
+  ctx.fillText("frame rate: " + frameRate.toFixed(3), 10, 200);
+
+}
+
+ball = {
+  x: 200, y: 200,
+  vx: 2, vy: 2*1.618,
+  draw(interpolation) {
+    ctx.beginPath();
+    dispX = this.x + (this.vx * interpolation) 
+    dispY = this.y + (this.vy * interpolation) 
+    ctx.arc(dispX, dispY, 10, 0, TAU);
+    ctx.fillStyle = "red";
+    ctx.fill();
+  },
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    if (this.x + 10 > 500) this.vx = -Math.abs(this.vx);
+    else if (this.x - 10 < 0) this.vx = Math.abs(this.vx);
+    if (this.y + 10 > 500) this.vy = -Math.abs(this.vy);
+    else if (this.y - 10 < 0) this.vy = Math.abs(this.vy);
+  }
+}
+
+function getRates() {
+  let elapsed = Date.now() - lastTime;
+  elapsed /= 1000; //in seconds
+  lastTime = Date.now();
+  updateRate = updates / elapsed;
+  frameRate = draws / elapsed;
+  updates = 0;
+  draws = 0;
+}
+
+setInterval(getRates, 2000)
+
+
+//////////////// modified particles.js
+
+let partColors = ["#812", "#26C", "#262"];
+
+window.onkeydown = e => {
+  if (e.keyCode == 32) {
+    Particles.explode(ball.x, ball.y, "blue", 500, 20)
+  }
+}
+
+Particles = {
+	parts: [],
+	update: function(){
+		let len = this.parts.length;
+		for (let i = 0; i < len; i++) {
+			if (this.parts[i].update) {
+				this.parts[i].update();
+			}
+			else {
+				this.parts.splice(i--, 1);
+				len--;
+			}
+		}
+	},
+	draw: function(ctx, interp){
+		for (let p of this.parts) {
+			if (p.draw) p.draw(ctx, interp);
+		}
+	},
+	addPart: function(x, y, color){
+		this.parts.push(newPart(x,y, color));
+	},
+  explode: function(x, y, color, t=20, rscale=10) {
+      for (let i = 0; i < t; i++){
+          this.parts.push(newPart(x, y, color, rscale));
+      }
+  },
+}
+
+function newPart(x, y, color, rscale) {
+	return {
+		ox: x,
+		oy: y,
+		x: x,
+		y: y,
+		r: 1 + rscale*Math.random(),
+		v: .4,
+		color: color,
+		theta: Math.random() * TAU,
+		draw: function(ctx){
+			ctx.beginPath();
+      let oldW = ctx.lineWidth;
+			ctx.lineWidth = 1;
+      ctx.fillStyle = this.color;
+      dispX = this.x + (this.v * this.r * Math.cos(this.theta) * interpolation) 
+      dispY = this.y + (this.v * this.r * Math.sin(this.theta) * interpolation) 
+			ctx.arc(dispX, dispY, this.r, 0, TAU);
+			ctx.fill();
+      ctx.strokeStyle = "black";
+			ctx.stroke();
+      ctx.closePath();
+      ctx.lineWidth = oldW;
+		},
+		update: function(){
+			this.x += this.v * this.r * Math.cos(this.theta);
+			this.y += this.v * this.r * Math.sin(this.theta);
+			this.r -= .1;
+			if (this.r <= 0) {
+				this.update = null;
+				this.draw = () => {};
+				return;
+			}
+			this.theta += .3-.6*Math.random();
+		},
+
+	}
+}
+</script>

@@ -30,18 +30,10 @@ Particles = {
 	addPart: function(x, y, color){
 		this.parts.push(newPart(x,y, color));
 	},
-    addSpiralPart: function(x, y){
-		this.parts.push(newSpiralPart(x,y, color));
-	},
   explode: function(x, y, color, t=20, rscale=10) {
       for (let i = 0; i < t; i++){
           this.parts.push(newPart(x, y, color, rscale));
       }
-  },
-	spiral: function(x, y, color, t=20, rscale=10) {
-    for (let i = 0; i < t; i++){
-      this.parts.push(newSpiralPart(x,y, color, rscale));
-    }
   }
 }
 
@@ -77,43 +69,6 @@ function newPart(x, y, color, rscale) {
 				return;
 			}
 			this.theta += .3-.6*Math.random();
-		},
-
-	}
-}
-
-function newSpiralPart(x, y, color, rscale) {
-	return {
-		ox: x,
-		oy: y,
-		x: x,
-		y: y,
-		r: 2 + rscale*Math.random(),
-		v: 5,
-		color: Math.random() > .7 ? "white" : color,
-		theta: Math.random() * tau,
-		draw: function(ctx){
-			ctx.beginPath();
-			let oldW = ctx.lineWidth;
-			ctx.lineWidth = 1;
-			ctx.fillStyle = this.color;
-			ctx.arc(this.x, this.y, this.r, 0, tau);
-			ctx.fill();
-			ctx.strokeStyle = "black";
-			ctx.stroke();
-			ctx.closePath();
-            ctx.lineWidth = oldW;
-		},
-		update: function(){
-			this.x += this.r * Math.cos(this.theta);
-			this.y += this.r * Math.sin(this.theta);
-			this.r -= .1;
-			if (this.r <= 0) {
-				this.update = null;
-				this.draw = () => {};
-				return;
-			}
-			this.theta += .05;
 		},
 
 	}
