@@ -150,7 +150,7 @@ function newPart(x, y, color, rscale) {
 		update: function(timediff){
 			this.x += this.v * this.r * Math.cos(this.theta) * (timediff * .06);
 			this.y += this.v * this.r * Math.sin(this.theta) * (timediff * .06);
-			this.r -= .1;
+			this.r -= .1 * (timediff * .06);
 			if (this.r <= 0) {
 				this.update = null;
 				this.draw = () => {};
