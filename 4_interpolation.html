@@ -1,5 +1,8 @@
 <link rel="stylesheet" type="text/css" href="game.css">
-
+<div>
+  <input type="checkbox" id="showActual" onchange="this.blur()">
+  <label for="showActual">Show Actual Position</label>
+</div>
 <canvas id="c"></canvas>
 
 <script>
@@ -13,10 +16,14 @@ var lastTime = Date.now();
 var updateRate = 0;
 var frameRate = 0;
 
-const TICKS_PER_SECOND = 30;
+const TICKS_PER_SECOND = 5;
 const MS_PER_TICK = 1000 / TICKS_PER_SECOND;
 const MAX_FRAMESKIP = 5;
+
+const BASE_SPEED = 60/TICKS_PER_SECOND;
+
 var next_game_tick = Date.now();
+var interpolation;
 
 ctx = c.getContext("2d");
 
@@ -27,7 +34,8 @@ function tick() {
     next_game_tick += MS_PER_TICK;
     loops++;
   }
-  draw(0);
+  interpolation = (Date.now() + MS_PER_TICK - next_game_tick) / MS_PER_TICK;
+  draw(interpolation);
 }
 
 setInterval(tick, 0);
@@ -44,6 +52,8 @@ function draw(interpolation) {
   ctx.fillStyle = "#555";
   ctx.fillRect(0,0, 500, 500)
 
+  if (showActual.checked) interpolation = 0;
+
   Particles.draw(ctx, interpolation);
 
   //ball
@@ -58,7 +68,7 @@ function draw(interpolation) {
 
 ball = {
   x: 200, y: 200,
-  vx: 2, vy: 2*1.618,
+  vx: BASE_SPEED, vy: 1.618 * BASE_SPEED,
   draw(interpolation) {
     ctx.beginPath();
     dispX = this.x + (this.vx * interpolation) 
@@ -96,6 +106,7 @@ let partColors = ["#812", "#26C", "#262"];
 
 window.onkeydown = e => {
   if (e.keyCode == 32) {
+    e.preventDefault();
     Particles.explode(ball.x, ball.y, "blue", 500, 20)
   }
 }
@@ -136,7 +147,7 @@ function newPart(x, y, color, rscale) {
 		x: x,
 		y: y,
 		r: 1 + rscale*Math.random(),
-		v: .4,
+		v: .4 * BASE_SPEED,
 		color: color,
 		theta: Math.random() * TAU,
 		draw: function(ctx, interp){
@@ -145,8 +156,10 @@ function newPart(x, y, color, rscale) {
 			ctx.lineWidth = 1;
       ctx.fillStyle = this.color;
       dispX = this.x + (this.v * this.r * Math.cos(this.theta) * interp) 
-      dispY = this.y + (this.v * this.r * Math.sin(this.theta) * interp) 
-			ctx.arc(dispX, dispY, this.r, 0, TAU);
+      dispY = this.y + (this.v * this.r * Math.sin(this.theta) * interp)
+      dispR = this.r - (1.2 * interp);
+      if (dispR <= 0) return;
+			ctx.arc(dispX, dispY, dispR, 0, TAU);
 			ctx.fill();
       ctx.strokeStyle = "black";
 			ctx.stroke();
@@ -156,7 +169,7 @@ function newPart(x, y, color, rscale) {
 		update: function(){
 			this.x += this.v * this.r * Math.cos(this.theta);
 			this.y += this.v * this.r * Math.sin(this.theta);
-			this.r -= .1;
+			this.r -= .1 * BASE_SPEED;
 			if (this.r <= 0) {
 				this.update = null;
 				this.draw = () => {};
